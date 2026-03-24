@@ -2,38 +2,63 @@ package tech.buildrun.Api.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import tools.jackson.databind.ObjectMapper;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
     @RestController
-    @RequestMapping(path = "/tasks")
+    //filtro tem que ser o id não tasks num geral, pra ser mais específico ao deletar algo
+    //fazer um put pra terminar os métodos http
+
+    @RequestMapping (path = "/IdAndTask")
+
+
     public class ApiController {
 
-        private List<String> tasks = new ArrayList<>();
+        public static class Task {
+            private Integer id;
+            private String tarefa;
 
-        private ObjectMapper objectMapper;
+            public Integer getId() { return id; }
+            public void setId(Integer id) { this.id = id; }
 
-        public ApiController(ObjectMapper objectMapper) {
-            this.objectMapper = objectMapper;
+            public String getTarefa()
+            {
+                return tarefa;
+            }
+            public void setTarefa(String tarefa)
+            {
+                this.tarefa = tarefa;
+            }
         }
 
-        // GET → listar tarefas
-        @GetMapping
-        public ResponseEntity<String> getTasks() throws Exception {
-            return ResponseEntity.ok(objectMapper.writeValueAsString(tasks));
-        }
+        Map<Integer, Task> idAndTask = new HashMap<>();
 
-        // POST → criar tarefa
         @PostMapping
-        public ResponseEntity<String> createTask(@RequestBody String tarefa) {
-            tasks.add(tarefa);
-            return ResponseEntity.ok("tarefa criada");
+        public ResponseEntity<String> createTask(@RequestBody  Task task ) {
+            if (idAndTask.containsKey(task.getId())){
+                return ResponseEntity.ok("id de tarefa ja existe use outro id");
+            }
+            else {
+                idAndTask.put(task.getId(), task);
+                return ResponseEntity.ok("tarefa criada");
+            }
         }
-        //Delete deletar tarefas
-        @DeleteMapping
-        public ResponseEntity <Void> cleartasks (){
-            tasks = new ArrayList<>();
-            return ResponseEntity.ok().build();
+
+        @GetMapping
+        public ResponseEntity<Map<Integer, Task>> getTarefa() {
+            return ResponseEntity.ok(idAndTask);
         }
+        @DeleteMapping("/{id}")
+        public ResponseEntity<String> deleteTask(@PathVariable Integer id) {
+
+            if (!idAndTask.containsKey(id)) {
+                return ResponseEntity.status(404).body("tarefa não encontrada");
+            }
+
+            idAndTask.remove(id);
+            return ResponseEntity.ok("tarefa removida");
+        }
+
     }
